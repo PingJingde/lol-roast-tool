@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOL 审判之眼 — 页面结构 & UI 布局</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#0a0a1a;color:#e0e0e0;display:flex;justify-content:center;padding:40px 20px}
+.container{max-width:960px;width:100%}
+h1{text-align:center;color:#c8a84e;margin-bottom:8px;font-size:26px}
+.subtitle{text-align:center;color:#707090;margin-bottom:30px;font-size:14px}
+.page{background:#12122a;border:2px solid #2a2a4a;border-radius:12px;overflow:hidden;margin-bottom:24px}
+.page-header{background:#1a1a3e;padding:12px 20px;border-bottom:1px solid #2a2a4a;font-weight:700;color:#c8a84e;font-size:16px}
+.page-body{display:flex;min-height:200px}
+.mock{flex:1;padding:16px}
+.search-bar{display:flex;gap:8px;align-items:center;background:#1a1a3e;border-radius:8px;padding:12px;margin:20px}
+.search-bar input{flex:1;padding:10px 14px;border:1px solid #3a3a6e;border-radius:6px;background:#0a0a1a;color:#e0e0e0;font-size:15px}
+.search-bar select{padding:10px;border:1px solid #3a3a6e;border-radius:6px;background:#0a0a1a;color:#e0e0e0}
+.search-bar button{padding:10px 24px;background:#c8a84e;color:#0a0a1a;border:none;border-radius:6px;font-weight:700;cursor:pointer}
+.data-panel{background:#1a1a3e;border-radius:8px;padding:14px;margin-bottom:10px}
+.data-panel h3{color:#c8a84e;margin-bottom:8px;font-size:14px}
+.data-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #2a2a3e;font-size:13px}
+.data-row .val{color:#c8a84e;font-weight:600}
+.roast-panel{background:linear-gradient(135deg,#2a1a1a,#1a1a2a);border:1px solid #c8a84e;border-radius:8px;padding:14px;position:relative}
+.roast-panel h3{color:#ff6b6b;margin-bottom:6px;font-size:14px}
+.roast-panel .roast-text{font-size:14px;line-height:1.6;color:#e0c0c0}
+.roast-panel .badge{position:absolute;top:-10px;right:14px;background:#ff4444;color:#fff;padding:4px 12px;border-radius:12px;font-size:11px;font-weight:700}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+pre{font-size:13px;line-height:1.8;color:#a0a0c0}
+.highlight{color:#c8a84e}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>📱 页面结构与 UI 布局</h1>
+<p class="subtitle">单页应用，两个核心视图</p>
+
+<div class="page">
+<div class="page-header">🔍 视图一：搜索首页</div>
+<div class="page-body">
+<div class="mock" style="display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%">
+<div style="text-align:center;margin-bottom:8px">
+<div style="font-size:60px;margin-bottom:8px">🏟️</div>
+<div style="font-size:22px;font-weight:700;color:#c8a84e;margin-bottom:4px">审判之眼</div>
+<div style="font-size:13px;color:#707090">输入召唤师名称，查看战绩与锐评</div>
+</div>
+<div class="search-bar" style="width:100%;max-width:500px">
+<input placeholder="输入召唤师名称...">
+<select><option>艾欧尼亚</option><option>黑色玫瑰</option></select>
+<button>⚡ 审判</button>
+</div>
+</div>
+</div>
+</div>
+
+<div class="grid2">
+<div class="page">
+<div class="page-header">📊 战绩数据面板</div>
+<div class="page-body">
+<div class="mock">
+<div class="data-panel">
+<h3>👤 召唤师信息</h3>
+<div class="data-row"><span>名称</span><span class="val">疾风剑豪#12345</span></div>
+<div class="data-row"><span>段位</span><span class="val">超凡大师</span></div>
+<div class="data-row"><span>胜率</span><span class="val">48% 😬</span></div>
+<div class="data-row"><span>KDA</span><span class="val">2.1 / 6.3 / 10.2</span></div>
+</div>
+<div class="data-panel">
+<h3>🎯 常用英雄</h3>
+<div class="data-row"><span>亚索</span><span class="val">43% | 234场</span></div>
+<div class="data-row"><span>劫</span><span class="val">47% | 189场</span></div>
+<div class="data-row"><span>永恩</span><span class="val">41% | 156场</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="page">
+<div class="page-header">🔥 锐评卡片</div>
+<div class="page-body">
+<div class="mock">
+<div class="roast-panel">
+<div class="badge">S 级锐评</div>
+<h3>⚡ 审判结果</h3>
+<p class="roast-text">"你的亚索玩了 234 场，胜率 43%——建议去玩人机找找自信。每次 E 进人群的速度比回城还快，队友 ? 信号都追不上你。"</p>
+<p style="color:#707090;font-size:11px;margin-top:8px">🤖 由 DeepSeek 锐评引擎生成</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="page">
+<div class="page-header">🌳 组件树</div>
+<div class="page-body">
+<div class="mock">
+<pre>
+App
+├── <span class="highlight">SearchPage</span>             搜索首页
+│   ├── SearchBar           大区选择器 + 名称输入
+│   └── RecentSearches      最近搜索 (localStorage)
+│
+└── <span class="highlight">ResultPage</span>             结果页面
+    ├── PlayerHeader        召唤师基本信息
+    ├── StatsPanel          数据面板 (段位/胜率/KDA)
+    ├── ChampionList        常用英雄列表
+    ├── RoastCard           锐评卡片 ⭐
+    │   ├── TemplateRoast   模板匹配锐评
+    │   └── AIRoast         DeepSeek AI 锐评
+    └── ShareButton         分享按钮 (二期)
+</pre>
+</div>
+</div>
+</div>
+
+</div>
+</body>
+</html>

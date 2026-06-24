@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>锐评引擎设计</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#0a0a1a;color:#e0e0e0;display:flex;justify-content:center;padding:40px 20px}
+.container{max-width:900px;width:100%}
+h1{text-align:center;color:#ff6b6b;margin-bottom:30px;font-size:28px}
+.card{background:#12122a;border:1px solid #2a2a4a;border-radius:12px;padding:24px;margin-bottom:20px}
+.card h2{color:#c8a84e;font-size:18px;margin-bottom:12px}
+.card p{color:#a0a0c0;font-size:14px;line-height:1.6;margin-bottom:8px}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;margin:16px 0}
+.flow .step{background:#1a1a3e;border:2px solid #3a3a6e;border-radius:8px;padding:10px 16px;text-align:center;min-width:110px}
+.flow .step .title{font-weight:700;font-size:14px;color:#c8a84e}
+.flow .step .sub{font-size:11px;color:#a0a0c0;margin-top:2px}
+.flow .arr{color:#ff6b6b;font-size:22px}
+.template-box{background:#1a1a3e;border:1px solid #3a3a6e;border-radius:8px;padding:14px;margin:8px 0}
+.template-box .trigger{color:#ff6b6b;font-size:13px;font-weight:700}
+.template-box .line{color:#c8a84e;font-size:14px;margin:6px 0;font-style:italic}
+.template-box .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tag{background:#2a1a3e;color:#a080c0;padding:3px 10px;border-radius:10px;font-size:11px}
+.code{background:#0d0d1a;border:1px solid #2a2a4a;border-radius:8px;padding:14px;font-family:monospace;font-size:13px;line-height:1.7;overflow-x:auto;color:#a0c0a0}
+.code .kw{color:#c8a84e}
+.code .str{color:#ff6b6b}
+.code .fn{color:#6bc5ff}
+.code .cm{color:#505070}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🔥 锐评引擎设计 — 核心灵魂</h1>
+
+<div class="card">
+<h2>🧠 双引擎架构：模板优先 + AI 兜底</h2>
+<p>先跑模板匹配（快、免费、可控），命中直接返回；未命中或模板分不够高时，调用 DeepSeek 网页版做深度生成。</p>
+<div class="flow">
+<div class="step"><div class="title">📊 战绩数据</div><div class="sub">玩家各项指标</div></div>
+<div class="arr">→</div>
+<div class="step"><div class="title">🎯 模板匹配</div><div class="sub">规则触发</div></div>
+<div class="arr">→</div>
+<div class="step"><div class="title">✅ 命中？</div><div class="sub">分数≥阈值</div></div>
+<div class="arr">→</div>
+<div class="step"><div class="title">📤 输出锐评</div><div class="sub">模板段子</div></div>
+</div>
+<div style="text-align:center;color:#707090;margin:8px 0">—— 未命中或分低时走 AI ——</div>
+<div class="flow">
+<div class="step"><div class="title">📊 战绩数据</div><div class="sub">玩家各项指标</div></div>
+<div class="arr">→</div>
+<div class="step"><div class="title">📝 构建 Prompt</div><div class="sub">注入战绩+人设</div></div>
+<div class="arr">→</div>
+<div class="step"><div class="title">🤖 DeepSeek</div><div class="sub">网页版对话</div></div>
+<div class="arr">→</div>
+<div class="step"><div class="title">🛡️ 安全过滤</div><div class="sub">敏感词检查</div></div>
+<div class="arr">→</div>
+<div class="step"><div class="title">📤 输出锐评</div><div class="sub">AI 段子</div></div>
+</div>
+</div>
+
+<div class="card">
+<h2>📋 模板匹配规则设计</h2>
+<p>每条模板包含：触发条件（数据指标阈值）、段子文本、评级（S/A/B/C）、适用标签。一个玩家可匹配多条，按评级取最高分展示。</p>
+
+<div class="template-box">
+<div class="trigger">🎯 触发条件：常用英雄胜率 &lt; 45% 且 场次 &gt; 100</div>
+<div class="line">"你的 {champion} 玩了 {games} 场，胜率 {winrate}——我建议你去玩人机找找自信。"</div>
+<div class="tags"><span class="tag">英雄梗</span><span class="tag">低胜率</span><span class="tag">S级</span></div>
+</div>
+
+<div class="template-box">
+<div class="trigger">🎯 触发条件：KDA 中死亡数 &gt; 击杀数 * 1.5</div>
+<div class="line">"KDA {kills}/{deaths}/{assists}，你的死亡次数比你的补刀还稳定，对面打野看见你就像看见提款机。"</div>
+<div class="tags"><span class="tag">KDA梗</span><span class="tag">高死亡率</span><span class="tag">A级</span></div>
+</div>
+
+<div class="template-box">
+<div class="trigger">🎯 触发条件：段位 &lt; 黄金 且 总场次 &gt; 500</div>
+<div class="line">"{tier} 段位，{total_games} 场——质量和数量你选了后者。峡谷质检员非你莫属。"</div>
+<div class="tags"><span class="tag">段位梗</span><span class="tag">老玩家</span><span class="tag">S级</span></div>
+</div>
+
+<div class="template-box">
+<div class="trigger">🎯 触发条件：常用英雄为亚索/劫/永恩 且 胜率 &lt; 48%</div>
+<div class="line">"又一个 {champion} 绝活哥——绝活指的是把队友活活气绝。E进人群的速度比回城还快，队友的问号信号都追不上你。"</div>
+<div class="tags"><span class="tag">英雄梗</span><span class="tag">快乐风男</span><span class="tag">S级</span></div>
+</div>
+
+<div class="template-box">
+<div class="trigger">🎯 触发条件：胜率 &gt; 55% 且 KDA &gt; 3.0</div>
+<div class="line">"胜率 {winrate}，KDA {kda}——你是代练还是炸鱼？建议自首。不过说实话，玩得不错。"</div>
+<div class="tags"><span class="tag">高胜率</span><span class="tag">夸奖</span><span class="tag">B级</span></div>
+</div>
+</div>
+
+<div class="card">
+<h2>🤖 DeepSeek AI 调用方案</h2>
+<p>当模板未命中或匹配分不够时，构建提示词通过 DeepSeek 网页版对话接口生成个性化锐评。</p>
+
+<div class="code">
+<span class="cm">// 构造锐评 Prompt</span>
+<span class="kw">const</span> prompt = <span class="str">`
+你是一个LOL锐评机器人，说话风格毒舌、幽默、一针见血。
+请根据以下玩家数据，生成一段100字以内的锐评：
+
+- 召唤师：{name}
+- 段位：{tier}
+- 胜率：{winrate}
+- KDA：{kda}
+- 常用英雄：{champions}
+- 总场次：{games}
+
+要求：
+1. 语气要像朋友间互相损，不要太恶意
+2. 针对具体数据吐槽，不要泛泛而谈
+3. 加点LOL玩家才懂的梗
+4. 禁止人身攻击和脏话
+`</span>;
+
+<span class="cm">// 通过 DeepSeek 网页版对话接口发送</span>
+<span class="fn">sendToDeepSeek</span>(prompt);
+</div>
+
+<p style="margin-top:12px;color:#a0a0c0;font-size:14px">调用方式：模拟 DeepSeek 网页端 API（chat.deepseek.com 的对话接口），前端 fetch 请求，不需要 API Key。</p>
+</div>
+
+<div class="card">
+<h2>🛡️ 安全 & 质量控制</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+<div style="background:#1a1a3e;border-radius:8px;padding:14px">
+<h3 style="color:#ff6b6b;font-size:14px;margin-bottom:6px">敏感词过滤</h3>
+<ul style="list-style:none;padding:0">
+<li style="font-size:13px;color:#a0a0c0;padding:2px 0">• 脏话/人身攻击拦截</li>
+<li style="font-size:13px;color:#a0a0c0;padding:2px 0">• 政治/敏感话题过滤</li>
+<li style="font-size:13px;color:#a0a0c0;padding:2px 0">• 替换为温馨提示</li>
+</ul>
+</div>
+<div style="background:#1a1a3e;border-radius:8px;padding:14px">
+<h3 style="color:#c8a84e;font-size:14px;margin-bottom:6px">质量兜底</h3>
+<ul style="list-style:none;padding:0">
+<li style="font-size:13px;color:#a0a0c0;padding:2px 0">• AI 超时 5s 回退模板</li>
+<li style="font-size:13px;color:#a0a0c0;padding:2px 0">• 模板库至少 50+ 条</li>
+<li style="font-size:13px;color:#a0a0c0;padding:2px 0">• 无数据时显示缺省文案</li>
+</ul>
+</div>
+</div>
+</div>
+
+</div>
+</body>
+</html>

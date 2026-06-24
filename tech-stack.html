@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技术栈 & 部署方案</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#0a0a1a;color:#e0e0e0;display:flex;justify-content:center;padding:40px 20px}
+.container{max-width:900px;width:100%}
+h1{text-align:center;color:#6bc5ff;margin-bottom:30px;font-size:28px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:#12122a;border:1px solid #2a2a4a;border-radius:12px;padding:20px;margin-bottom:20px}
+.card h2{font-size:16px;margin-bottom:12px}
+.card ul{list-style:none;padding:0}
+.card li{font-size:14px;color:#a0a0c0;padding:4px 0}
+.card li::before{content:'▸ '}
+.stack-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1a1a3e}
+.stack-item:last-child{border:none}
+.stack-icon{font-size:20px;width:28px;text-align:center}
+.stack-name{font-weight:700;font-size:14px}
+.stack-desc{font-size:12px;color:#707090}
+.deploy{background:linear-gradient(135deg,#0a1a2a,#12122a);border:2px solid #6bc5ff}
+.deploy h2{color:#6bc5ff}
+.deploy .step-row{display:flex;align-items:center;gap:8px;margin:10px 0}
+.deploy .step-num{background:#6bc5ff;color:#0a0a1a;width:24px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.deploy .step-text{font-size:13px;color:#a0a0c0}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🛠️ 技术栈全貌 & 部署方案</h1>
+
+<div class="grid">
+<div class="card">
+<h2 style="color:#42b883">🎨 前端核心</h2>
+<div class="stack-item"><span class="stack-icon">🟢</span><span class="stack-name">Vue 3</span><span class="stack-desc">Composition API + script setup</span></div>
+<div class="stack-item"><span class="stack-icon">📘</span><span class="stack-name">TypeScript</span><span class="stack-desc">类型安全，减少运行时错误</span></div>
+<div class="stack-item"><span class="stack-icon">🎨</span><span class="stack-name">Tailwind CSS</span><span class="stack-desc">原子化 CSS，快速构建 UI</span></div>
+<div class="stack-item"><span class="stack-icon">⚡</span><span class="stack-name">Vite</span><span class="stack-desc">极速开发服务器 & 构建</span></div>
+<div class="stack-item"><span class="stack-icon">🛣️</span><span class="stack-name">Vue Router</span><span class="stack-desc">SPA 路由管理</span></div>
+</div>
+
+<div class="card">
+<h2 style="color:#ff6b6b">🔧 工具 & 数据层</h2>
+<div class="stack-item"><span class="stack-icon">📡</span><span class="stack-name">Axios / fetch</span><span class="stack-desc">HTTP 请求，数据获取</span></div>
+<div class="stack-item"><span class="stack-icon">🔄</span><span class="stack-name">CORS Proxy</span><span class="stack-desc">cloudflare CORS proxy 或自建</span></div>
+<div class="stack-item"><span class="stack-icon">🧠</span><span class="stack-name">RoastEngine</span><span class="stack-desc">自定义模板匹配引擎</span></div>
+<div class="stack-item"><span class="stack-icon">🤖</span><span class="stack-name">DeepSeek Web</span><span class="stack-desc">chat.deepseek.com 对话接口</span></div>
+<div class="stack-item"><span class="stack-icon">💾</span><span class="stack-name">localStorage</span><span class="stack-desc">搜索历史 / 模板缓存</span></div>
+</div>
+
+<div class="card">
+<h2 style="color:#c8a84e">🧪 质量保障</h2>
+<div class="stack-item"><span class="stack-icon">✅</span><span class="stack-name">Vitest</span><span class="stack-desc">单元测试，与 Vite 深度集成</span></div>
+<div class="stack-item"><span class="stack-icon">🔍</span><span class="stack-name">ESLint + Prettier</span><span class="stack-desc">代码规范 & 格式化</span></div>
+<div class="stack-item"><span class="stack-icon">🎭</span><span class="stack-name">敏感词库</span><span class="stack-desc">锐评内容安全过滤</span></div>
+</div>
+
+<div class="card deploy">
+<h2>🚀 部署方案</h2>
+<div class="step-row"><span class="step-num">1</span><span class="step-text">代码推送至 GitHub 仓库</span></div>
+<div class="step-row"><span class="step-num">2</span><span class="step-text">Vercel 自动构建部署（推荐）</span></div>
+<div class="step-row"><span class="step-num">3</span><span class="step-text">绑定自定义域名（可选）</span></div>
+<div class="step-row"><span class="step-num">4</span><span class="step-text">CORS 代理配置环境变量</span></div>
+<div style="margin-top:10px;font-size:12px;color:#707090">特点：零服务器成本、自动 HTTPS、全球 CDN、Git push 自动部署</div>
+</div>
+</div>
+
+<div class="card" style="background:#12122a">
+<h2 style="color:#c8a84e">📁 项目目录结构</h2>
+<pre style="font-family:monospace;font-size:13px;line-height:1.7;color:#a0a0c0;overflow-x:auto">
+lol-roast-tool/
+├── index.html
+├── package.json
+├── vite.config.ts
+├── tailwind.config.js
+├── tsconfig.json
+├── src/
+│   ├── main.ts                 入口
+│   ├── App.vue                 根组件
+│   ├── router/
+│   │   └── index.ts            路由配置
+│   ├── pages/
+│   │   ├── SearchPage.vue      搜索首页
+│   │   └── ResultPage.vue      结果页面
+│   ├── components/
+│   │   ├── SearchBar.vue       搜索栏
+│   │   ├── PlayerHeader.vue    召唤师信息
+│   │   ├── StatsPanel.vue      数据面板
+│   │   ├── ChampionList.vue    英雄列表
+│   │   └── RoastCard.vue       锐评卡片
+│   ├── engine/
+│   │   ├── templateRoast.ts    模板匹配引擎
+│   │   ├── templates.json      模板库 (50+条)
+│   │   └── deepseekAI.ts       DeepSeek 调用
+│   ├── services/
+│   │   └── dataFetcher.ts      数据获取 & CORS 代理
+│   ├── utils/
+│   │   ├── filter.ts           敏感词过滤
+│   │   └── cache.ts            localStorage 缓存
+│   └── types/
+│       └── index.ts            TypeScript 类型定义
+└── public/
+    └── favicon.ico
+</pre>
+</div>
+
+</div>
+</body>
+</html>
