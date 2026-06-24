@@ -1,10 +1,27 @@
 import type { PlayerData } from '@/types'
 
 /**
- * Fetch player data — uses demo mock data (real API not yet connected)
+ * Fetch player data — tries real API first, falls back to mock
  */
 export async function fetchPlayerData(summonerName: string, region: string): Promise<PlayerData> {
-  // Generate deterministic mock data based on summoner name
+  // Try real API via Vercel serverless function
+  try {
+    const res = await fetch(
+      `/api/summoner?name=${encodeURIComponent(summonerName)}&region=${encodeURIComponent(region)}`,
+      { signal: AbortSignal.timeout(10000) }
+    )
+    if (res.ok) {
+      const data = await res.json()
+      if (!data.error) {
+        data._isMock = false
+        return data as PlayerData
+      }
+    }
+  } catch {
+    // API unavailable — fall through to mock
+  }
+
+  // Fallback: generate mock data
   const mockPlayer = generateMockPlayer(summonerName, region)
   mockPlayer._isMock = true
   return mockPlayer
