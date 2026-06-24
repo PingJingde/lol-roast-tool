@@ -1,0 +1,107 @@
+[
+  {
+    "id": "low_winrate_champ",
+    "condition": { "championWinRateBelow": 45, "championGamesAbove": 100 },
+    "text": "你的 {champion} 玩了 {games} 场，胜率 {winrate}——我建议你去玩人机找找自信。",
+    "grade": "S",
+    "tags": ["英雄梗", "低胜率"]
+  },
+  {
+    "id": "feeder_kda",
+    "condition": { "deathsAboveKillsRatio": 1.5 },
+    "text": "KDA {kda}，你的死亡次数比你的补刀还稳定，对面打野看见你就像看见提款机。",
+    "grade": "A",
+    "tags": ["KDA梗", "高死亡率"]
+  },
+  {
+    "id": "hardstuck_low_elo",
+    "condition": { "tierBelow": "黄金", "gamesAbove": 500 },
+    "text": "{tier} 段位，{total_games} 场——质量和数量你选了后者。峡谷质检员非你莫属。",
+    "grade": "S",
+    "tags": ["段位梗", "老玩家"]
+  },
+  {
+    "id": "yasuo_otp",
+    "condition": { "champions": ["亚索"], "championWinRateBelow": 48, "championGamesAbove": 50 },
+    "text": "又一个亚索绝活哥——绝活指的是把队友活活气绝。E进人群的速度比回城还快，队友的问号信号都追不上你。",
+    "grade": "S",
+    "tags": ["英雄梗", "亚索"]
+  },
+  {
+    "id": "zed_otp",
+    "condition": { "champions": ["劫"], "championWinRateBelow": 48, "championGamesAbove": 50 },
+    "text": "{champion} 玩了 {games} 场，胜率 {winrate}——你的影子比你的操作更有存在感。",
+    "grade": "S",
+    "tags": ["英雄梗", "劫"]
+  },
+  {
+    "id": "yone_otp",
+    "condition": { "champions": ["永恩"], "championWinRateBelow": 48, "championGamesAbove": 50 },
+    "text": "{champion} {games} 场 {winrate}——封印解除的只有你的智商封印。双剑合璧，队友双倍血压。",
+    "grade": "S",
+    "tags": ["英雄梗", "永恩"]
+  },
+  {
+    "id": "high_winrate_smurf",
+    "condition": { "winRateAbove": 55 },
+    "text": "胜率 {winrate}，KDA {kda}——你是代练还是炸鱼？建议自首。不过说实话，玩得不错 👍",
+    "grade": "B",
+    "tags": ["高胜率", "夸奖"]
+  },
+  {
+    "id": "very_low_winrate",
+    "condition": { "winRateBelow": 40, "gamesAbove": 50 },
+    "text": "胜率 {winrate}，{total_games} 场——你不是在玩游戏，你是在做社会学实验：队友的忍耐极限到底在哪。",
+    "grade": "S",
+    "tags": ["低胜率", "整活"]
+  },
+  {
+    "id": "bronze_silver_hardstuck",
+    "condition": { "tierBelow": "黄金", "gamesAbove": 1000 },
+    "text": "{tier}，{total_games} 场——你已经是峡谷非物质文化遗产：千年老妖怪。建议把号传给下一代继续上分。",
+    "grade": "S",
+    "tags": ["段位梗", "天牢"]
+  },
+  {
+    "id": "kda_god",
+    "condition": { "winRateAbove": 52 },
+    "text": "KDA {kda}——KDA 玩家实锤了。队友在打团你在刷野，队友死了你在收兵。赢了你C，输了队友菜。",
+    "grade": "A",
+    "tags": ["KDA梗", "KDA怪"]
+  },
+  {
+    "id": "support_main",
+    "condition": { "champions": ["锤石", "璐璐", "猫咪", "娜美", "风女"] },
+    "text": "主玩 {champion}？辅助玩家——峡谷最伟大的奉献者。输了怪AD，赢了辅助没作用，习惯了就好。",
+    "grade": "B",
+    "tags": ["辅助", "位置梗"]
+  },
+  {
+    "id": "adc_main",
+    "condition": { "champions": ["薇恩", "卡莎", "金克丝", "EZ", "德莱文"] },
+    "text": "主玩 {champion}？ADC 玩家——峡谷最脆的存在，刺客的提款机，辅助的噩梦。打团先被秒是传统艺能。",
+    "grade": "B",
+    "tags": ["ADC", "位置梗"]
+  },
+  {
+    "id": "no_champ_data",
+    "condition": {},
+    "text": "数据太少我都不好意思锐评你——多打几把再来吧，现在的你就像刚出新手村的勇者。",
+    "grade": "C",
+    "tags": ["无数据", "兜底"]
+  },
+  {
+    "id": "mid_elo_average",
+    "condition": { "winRateBelow": 52, "winRateAbove": 45 },
+    "text": "胜率 {winrate}，{tier} 段位——标准的峡谷打工人。不强不弱，不悲不喜，上不去下不来，这就是你的 LOL 人生。",
+    "grade": "A",
+    "tags": ["普通", "中位"]
+  },
+  {
+    "id": "lee_sin_otp",
+    "condition": { "champions": ["盲僧", "李青"], "championGamesAbove": 50, "championWinRateBelow": 48 },
+    "text": "{champion} {games} 场 {winrate}——一库一库把自己库库送掉。你的回旋踢成功率应该和彩票中奖率差不多。",
+    "grade": "S",
+    "tags": ["英雄梗", "盲僧"]
+  }
+]
