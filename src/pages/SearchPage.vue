@@ -27,7 +27,7 @@ function handleSelectRecent(name: string, region: string) {
     <!-- Logo 区域 -->
     <div class="text-center mb-10">
       <div class="text-7xl mb-4">🏟️</div>
-      <h1 class="text-4xl font-extrabold text-yellow-400 tracking-tight mb-2">审判之眼</h1>
+      <h1 class="text-4xl font-extrabold text-yellow-400 tracking-tight mb-2">峡谷品鉴</h1>
       <p class="text-gray-500 text-lg">输入召唤师名称，查看战绩与锐评</p>
     </div>
 

@@ -50,7 +50,7 @@ function handleSearch() {
       @click="handleSearch"
     >
       <span v-if="loading" class="inline-block w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></span>
-      <span>{{ loading ? '审判中...' : '⚡ 审判' }}</span>
+      <span>{{ loading ? '品鉴中...' : '🍷 品鉴' }}</span>
     </button>
   </div>
 </template>

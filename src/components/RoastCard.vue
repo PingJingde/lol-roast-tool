@@ -28,7 +28,7 @@ const gradeColors: Record<string, string> = {
       >
         {{ roast.grade }} 级锐评
       </div>
-      <h3 class="text-lg font-bold text-red-400 mb-3">⚡ 审判结果</h3>
+      <h3 class="text-lg font-bold text-red-400 mb-3">🍷 品鉴结果</h3>
       <p class="text-gray-300 text-lg leading-relaxed italic">"{{ roast.text }}"</p>
       <p class="text-gray-600 text-xs mt-4">
         {{ roast.source === 'ai' ? '🤖 由 DeepSeek 锐评引擎生成' : '📋 由模板引擎生成' }}
