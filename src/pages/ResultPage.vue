@@ -8,6 +8,9 @@ import StatsPanel from '@/components/StatsPanel.vue'
 import ChampionList from '@/components/ChampionList.vue'
 import RoastCard from '@/components/RoastCard.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import { generateAIRoast } from '@/engine/deepseekAI'
+import { matchTemplate } from '@/engine/templateRoast'
+import { containsSensitive, filterSensitive, SAFE_FALLBACK } from '@/utils/filter'
 
 const route = useRoute()
 const loading = ref(true)
@@ -27,8 +30,25 @@ onMounted(async () => {
 
   try {
     player.value = await fetchPlayerData(name, region)
-    // M3 will integrate roast engine here
-    roast.value = null
+
+    // Use template engine for roast
+    let result = matchTemplate(player.value)
+
+    // If template didn't get a high-grade match, use AI
+    if (!result || result.grade === 'C') {
+      result = await generateAIRoast(player.value)
+    }
+
+    // Safety check
+    if (result && containsSensitive(result.text)) {
+      result.text = filterSensitive(result.text)
+      // If filtered to almost nothing, use safe fallback
+      if (result.text.replace(/\*+/g, '').trim().length < 5) {
+        result.text = SAFE_FALLBACK
+      }
+    }
+
+    roast.value = result
   } catch (e) {
     error.value = e instanceof Error ? e.message : '查询失败，请稍后重试'
   } finally {
