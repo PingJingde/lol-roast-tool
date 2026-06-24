@@ -1,91 +1,134 @@
+/**
+ * Data fetcher using lolso1.com API
+ * Replaces the old scraping-based approach
+ */
 import type { PlayerData } from '@/types'
+import { apiPost, apiGet } from './lolso1Api'
+import { getCached, setCache } from '@/utils/cache'
+
+interface ServerInfoResponse {
+  summonerName: string
+  tagLine?: string
+  puuid: string
+  serverId: string
+  displayName?: string
+}
+
+interface OverviewResponse {
+  tier: string
+  rank?: string
+  leaguePoints?: number
+  winRate?: number
+  kda?: { kills: number; deaths: number; assists: number }
+  totalGames?: number
+  recentChampions?: Array<{
+    championName: string
+    winRate: number
+    games: number
+  }>
+}
+
+interface SearchRequest {
+  player: string
+  serverId?: string
+}
 
 /**
- * Fetch player data — tries real API first, falls back to mock
+ * Search for a summoner and get their data
+ * Player format: "name#tag" or just "name"
  */
-export async function fetchPlayerData(summonerName: string, region: string): Promise<PlayerData> {
-  // Try real API via Vercel serverless function
+export async function fetchPlayerData(
+  summonerName: string,
+  region: string
+): Promise<PlayerData> {
+  const cacheKey = `lolso1_${region}_${summonerName}`
+
+  // Check cache
+  const cached = getCached<PlayerData>(cacheKey)
+  if (cached) return cached
+
+  // Step 1: Server info (resolves name to puuid)
+  const searchName = summonerName.includes('#')
+    ? summonerName
+    : `${summonerName}#${region}`
+
+  const serverInfo = await apiPost<ServerInfoResponse>('/league/player/server_info', {
+    player: searchName,
+  } as SearchRequest)
+
+  if (!serverInfo || !serverInfo.puuid) {
+    throw new Error('未找到该召唤师')
+  }
+
+  // Step 2: Get overview
+  const overview = await apiPost<OverviewResponse>('/league/player/overview', {
+    puuid: serverInfo.puuid,
+    serverId: serverInfo.serverId,
+  })
+
+  // Step 3: Build PlayerData
+  const player: PlayerData = {
+    summonerName: serverInfo.displayName || serverInfo.summonerName,
+    region: serverInfo.serverId || region,
+    tier: normalizeTier(overview?.tier),
+    winRate: Math.round((overview?.winRate || 0) * 100) / 100,
+    kda: {
+      kills: overview?.kda?.kills || 0,
+      deaths: overview?.kda?.deaths || 0,
+      assists: overview?.kda?.assists || 0,
+    },
+    totalGames: overview?.totalGames || 0,
+    champions: (overview?.recentChampions || []).map(c => ({
+      name: c.championName,
+      winRate: Math.round(c.winRate * 100) / 100,
+      games: c.games,
+    })),
+  }
+
+  // Cache
+  setCache(cacheKey, player)
+  return player
+}
+
+/**
+ * Check if user is logged in
+ */
+export async function checkLoginStatus(): Promise<boolean> {
   try {
-    const res = await fetch(
-      `/api/summoner?name=${encodeURIComponent(summonerName)}&region=${encodeURIComponent(region)}`,
-      { signal: AbortSignal.timeout(10000) }
-    )
-    if (res.ok) {
-      const data = await res.json()
-      if (!data.error) {
-        data._isMock = false
-        return data as PlayerData
-      }
-    }
+    await apiGet('/user/me')
+    return true
   } catch {
-    // API unavailable — fall through to mock
+    return false
   }
-
-  // Fallback: generate mock data
-  const mockPlayer = generateMockPlayer(summonerName, region)
-  mockPlayer._isMock = true
-  return mockPlayer
 }
 
 /**
- * Generate deterministic mock data from summoner name
+ * Get current user info
  */
-function generateMockPlayer(name: string, region: string): PlayerData {
-  // Hash the name to get consistent results per player
-  const seed = hashString(name + region)
-
-  const tiers: PlayerData['tier'][] = [
-    '黑铁', '青铜', '白银', '黄金', '铂金', '翡翠', '钻石', '大师', '宗师', '王者',
-  ]
-  const champs = [
-    '亚索', '劫', '永恩', '盲僧', '薇恩', '卡莎', '金克丝', '德莱文',
-    '锤石', '猫咪', '璐璐', 'EZ', '盖伦', '诺手', '剑姬', '锐雯',
-  ]
-
-  const tierIdx = seededRand(seed, 0, tiers.length)
-  const winRate = 35 + seededRand(seed, 1, 30)
-  const totalGames = 50 + seededRand(seed, 2, 1500)
-  const kills = (seededRand(seed, 3, 80) / 10)
-  const deaths = (seededRand(seed, 4, 100) / 12)
-  const assists = (seededRand(seed, 5, 120) / 10)
-
-  const champCount = 1 + seededRand(seed, 6, 4)
-  const champions = []
-  const usedChamps = new Set<number>()
-  for (let i = 0; i < champCount; i++) {
-    let idx = seededRand(seed, 7 + i, champs.length)
-    while (usedChamps.has(idx)) idx = (idx + 1) % champs.length
-    usedChamps.add(idx)
-    champions.push({
-      name: champs[idx],
-      winRate: 30 + seededRand(seed, 10 + i, 40),
-      games: 10 + seededRand(seed, 14 + i, 300),
-    })
-  }
-
-  return {
-    summonerName: name,
-    region,
-    tier: tiers[tierIdx],
-    winRate,
-    kda: { kills, deaths, assists },
-    totalGames,
-    champions,
-  }
+export async function getCurrentUser() {
+  return apiGet<{ id: string; username: string; email: string }>('/user/me')
 }
 
-function hashString(s: string): number {
-  let hash = 0
-  for (let i = 0; i < s.length; i++) {
-    const c = s.charCodeAt(i)
-    hash = ((hash << 5) - hash) + c
-    hash |= 0
-  }
-  return Math.abs(hash)
+const TIER_MAP: Record<string, string> = {
+  'CHALLENGER': '王者',
+  'GRANDMASTER': '宗师',
+  'MASTER': '大师',
+  'DIAMOND': '钻石',
+  'EMERALD': '翡翠',
+  'PLATINUM': '铂金',
+  'GOLD': '黄金',
+  'SILVER': '白银',
+  'BRONZE': '青铜',
+  'IRON': '黑铁',
 }
 
-function seededRand(seed: number, offset: number, max: number): number {
-  let s = seed + offset * 16807
-  s = (s * 1103515245 + 12345) & 0x7fffffff
-  return s % max
+function normalizeTier(raw?: string): PlayerData['tier'] {
+  if (!raw) return '未定级'
+  const upper = raw.toUpperCase().trim()
+  for (const [key, value] of Object.entries(TIER_MAP)) {
+    if (upper.includes(key)) return value as PlayerData['tier']
+  }
+  return '未定级'
 }
+
+export { apiPost, apiGet }
