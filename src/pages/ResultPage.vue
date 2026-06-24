@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import type { PlayerData, RoastResult } from '@/types'
+import { fetchPlayerData } from '@/services/dataFetcher'
 import PlayerHeader from '@/components/PlayerHeader.vue'
 import StatsPanel from '@/components/StatsPanel.vue'
 import ChampionList from '@/components/ChampionList.vue'
@@ -10,32 +11,30 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const route = useRoute()
 const loading = ref(true)
+const error = ref<string | null>(null)
 const player = ref<PlayerData | null>(null)
 const roast = ref<RoastResult | null>(null)
 
-// Temporary mock data — will be replaced in M2 with real data fetching
-setTimeout(() => {
-  player.value = {
-    summonerName: (route.query.name as string) || '疾风剑豪#12345',
-    region: (route.query.region as string) || '艾欧尼亚',
-    tier: '大师',
-    winRate: 48,
-    kda: { kills: 2.1, deaths: 6.3, assists: 10.2 },
-    totalGames: 234,
-    champions: [
-      { name: '亚索', winRate: 43, games: 234 },
-      { name: '劫', winRate: 47, games: 189 },
-      { name: '永恩', winRate: 41, games: 156 },
-    ],
+onMounted(async () => {
+  const name = route.query.name as string
+  const region = route.query.region as string
+
+  if (!name || !region) {
+    error.value = '缺少查询参数，请返回首页重新搜索'
+    loading.value = false
+    return
   }
-  roast.value = {
-    text: '你的亚索玩了 234 场，胜率 43%——建议去玩人机找找自信。每次E进人群的速度比回城还快，队友?信号都追不上你。',
-    grade: 'S',
-    source: 'template',
-    templateId: 'yasuo_low_winrate',
+
+  try {
+    player.value = await fetchPlayerData(name, region)
+    // M3 will integrate roast engine here
+    roast.value = null
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : '查询失败，请稍后重试'
+  } finally {
+    loading.value = false
   }
-  loading.value = false
-}, 1500)
+})
 </script>
 
 <template>
@@ -48,6 +47,16 @@ setTimeout(() => {
     </button>
 
     <LoadingSpinner v-if="loading && !player">正在查询战绩...</LoadingSpinner>
+
+    <div v-if="error" class="text-center py-20">
+      <p class="text-red-400 text-lg">{{ error }}</p>
+      <button
+        class="mt-4 px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
+        @click="$router.push('/')"
+      >
+        ← 返回搜索
+      </button>
+    </div>
 
     <template v-else-if="player">
       <PlayerHeader :player="player" />
@@ -65,7 +74,7 @@ setTimeout(() => {
       </div>
     </template>
 
-    <div v-else class="text-center py-20 text-gray-500">
+    <div v-else-if="!loading && !error" class="text-center py-20 text-gray-500">
       <p class="text-lg">未找到该召唤师</p>
     </div>
   </div>
