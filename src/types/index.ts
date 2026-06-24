@@ -7,6 +7,7 @@ export interface PlayerData {
   kda: KDA
   totalGames: number
   champions: ChampionStat[]
+  _isMock?: boolean     // true when using demo mock data
 }
 
 export type Tier =

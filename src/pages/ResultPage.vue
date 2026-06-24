@@ -80,6 +80,9 @@ onMounted(async () => {
 
     <template v-else-if="player">
       <PlayerHeader :player="player" />
+      <div v-if="player._isMock" class="mb-4 px-3 py-1.5 bg-yellow-900/40 border border-yellow-600/30 rounded-lg text-yellow-400 text-xs inline-block">
+        ⚠️ 演示模式 — 数据为模拟，仅供体验。对接真实 API 后将显示实际战绩。
+      </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Left: Data -->
