@@ -1,54 +1,12 @@
 import type { PlayerData } from '@/types'
-import { getCached, setCache } from '@/utils/cache'
-
-// Free public CORS proxy
-const CORS_PROXIES = [
-  'https://corsproxy.io/?',
-  'https://api.allorigins.win/raw?url=',
-]
-
-interface RawPlayerInfo {
-  name: string
-  tier: string
-  winRate: string
-  totalGames: string
-  kda: string
-}
 
 /**
- * Fetch player data — tries real data first, falls back to demo mock
+ * Fetch player data — uses demo mock data (real API not yet connected)
  */
 export async function fetchPlayerData(summonerName: string, region: string): Promise<PlayerData> {
-  const cacheKey = `${region}_${summonerName}`
-
-  // 1. Check cache
-  const cached = getCached<PlayerData>(cacheKey)
-  if (cached) return cached
-
-  // 2. Try real fetch through CORS proxy
-  for (const proxy of CORS_PROXIES) {
-    try {
-      const proxyUrl = `${proxy}https://lolhelper.cn/api/query?region=${encodeURIComponent(region)}&name=${encodeURIComponent(summonerName)}`
-      const response = await fetch(proxyUrl, {
-        headers: { 'Accept': 'application/json' },
-        signal: AbortSignal.timeout(5000),
-      })
-      if (response.ok) {
-        const raw: RawPlayerInfo = await response.json()
-        const player: PlayerData = parsePlayerData(raw, region)
-        player._isMock = false
-        setCache(cacheKey, player)
-        return player
-      }
-    } catch {
-      continue
-    }
-  }
-
-  // 3. All fetches failed — generate demo mock data
+  // Generate deterministic mock data based on summoner name
   const mockPlayer = generateMockPlayer(summonerName, region)
   mockPlayer._isMock = true
-  setCache(cacheKey, mockPlayer)
   return mockPlayer
 }
 
@@ -113,39 +71,4 @@ function seededRand(seed: number, offset: number, max: number): number {
   let s = seed + offset * 16807
   s = (s * 1103515245 + 12345) & 0x7fffffff
   return s % max
-}
-
-function parsePlayerData(raw: RawPlayerInfo, region: string): PlayerData {
-  const [k, d, a] = (raw.kda || '0/0/0').split('/').map(Number)
-
-  return {
-    summonerName: raw.name || '',
-    region,
-    tier: normalizeTier(raw.tier),
-    winRate: parseFloat(raw.winRate) || 0,
-    kda: { kills: k, deaths: d, assists: a },
-    totalGames: parseInt(raw.totalGames) || 0,
-    champions: [],
-  }
-}
-
-const TIER_MAP: Record<string, PlayerData['tier']> = {
-  'challenger': '王者',
-  'grandmaster': '宗师',
-  'master': '大师',
-  'diamond': '钻石',
-  'emerald': '翡翠',
-  'platinum': '铂金',
-  'gold': '黄金',
-  'silver': '白银',
-  'bronze': '青铜',
-  'iron': '黑铁',
-}
-
-function normalizeTier(raw: string): PlayerData['tier'] {
-  const lower = raw.toLowerCase().trim()
-  for (const [key, value] of Object.entries(TIER_MAP)) {
-    if (lower.includes(key)) return value
-  }
-  return '未定级'
 }
