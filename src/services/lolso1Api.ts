@@ -126,7 +126,10 @@ export async function signedFetch(
   init?: RequestInit
 ): Promise<Response> {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
-  const pathname = new URL(url, API_BASE).pathname
+  // Extract pathname from URL string
+  const pathname = url.startsWith('http')
+    ? new URL(url).pathname
+    : url.startsWith('/') ? url.split('?')[0] : '/' + url.split('?')[0]
 
   let request = new Request(
     url.startsWith('http') || url.startsWith('/api') ? url : `${API_BASE}${url}`,

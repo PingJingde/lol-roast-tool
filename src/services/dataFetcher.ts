@@ -1,10 +1,50 @@
 /**
  * Data fetcher using lolso1.com API
- * Replaces the old scraping-based approach
+ * Auto-logins on first call using credentials from .env
  */
 import type { PlayerData } from '@/types'
 import { apiPost, apiGet } from './lolso1Api'
 import { getCached, setCache } from '@/utils/cache'
+
+let loginPromise: Promise<boolean> | null = null
+
+/**
+ * Auto-login with stored credentials
+ */
+async function ensureLogin(): Promise<boolean> {
+  // Already logged in?
+  try {
+    await apiGet('/user/me')
+    return true
+  } catch {
+    // Need to login
+  }
+
+  // Use existing login promise if in-flight
+  if (loginPromise) return loginPromise
+
+  loginPromise = (async () => {
+    const email = import.meta.env.VITE_LOLSO1_EMAIL
+    const password = import.meta.env.VITE_LOLSO1_PASSWORD
+
+    if (!email || !password) {
+      console.warn('No lolso1 credentials configured. Set VITE_LOLSO1_EMAIL and VITE_LOLSO1_PASSWORD in .env')
+      return false
+    }
+
+    try {
+      // Try login with common field formats
+      await apiPost('/user/login', { account: email, password })
+      console.log('✅ Auto-logged into lolso1.com')
+      return true
+    } catch (e) {
+      console.error('❌ Auto-login failed:', e)
+      return false
+    }
+  })()
+
+  return loginPromise
+}
 
 interface ServerInfoResponse {
   summonerName: string
@@ -28,11 +68,6 @@ interface OverviewResponse {
   }>
 }
 
-interface SearchRequest {
-  player: string
-  serverId?: string
-}
-
 /**
  * Search for a summoner and get their data
  * Player format: "name#tag" or just "name"
@@ -43,18 +78,23 @@ export async function fetchPlayerData(
 ): Promise<PlayerData> {
   const cacheKey = `lolso1_${region}_${summonerName}`
 
+  // Ensure logged in
+  const loggedIn = await ensureLogin()
+  if (!loggedIn) throw new Error('请先登录 lolso1.com')
+
   // Check cache
   const cached = getCached<PlayerData>(cacheKey)
   if (cached) return cached
 
   // Step 1: Server info (resolves name to puuid)
-  const searchName = summonerName.includes('#')
-    ? summonerName
-    : `${summonerName}#${region}`
+  const [gameName, tagLine = ''] = summonerName.includes('#')
+    ? summonerName.split('#')
+    : [summonerName, '']
 
   const serverInfo = await apiPost<ServerInfoResponse>('/league/player/server_info', {
-    player: searchName,
-  } as SearchRequest)
+    gameName: gameName.trim(),
+    tagLine: tagLine.trim(),
+  })
 
   if (!serverInfo || !serverInfo.puuid) {
     throw new Error('未找到该召唤师')
