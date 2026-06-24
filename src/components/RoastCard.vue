@@ -15,7 +15,7 @@ const gradeColors: Record<string, string> = {
   <div class="bg-gradient-to-br from-gray-900 to-gray-950 rounded-xl p-6 border border-yellow-600/30 relative min-h-[200px]">
     <!-- Loading -->
     <div v-if="loading" class="flex flex-col items-center gap-3 py-8">
-      <div class="w-8 h-8 border-3 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+      <div class="w-8 h-8 border-[3px] border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
       <p class="text-gray-400 text-sm">AI 正在分析你的战绩...</p>
     </div>
 

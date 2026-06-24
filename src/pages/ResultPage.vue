@@ -18,7 +18,7 @@ setTimeout(() => {
   player.value = {
     summonerName: (route.query.name as string) || '疾风剑豪#12345',
     region: (route.query.region as string) || '艾欧尼亚',
-    tier: '超凡大师',
+    tier: '大师',
     winRate: 48,
     kda: { kills: 2.1, deaths: 6.3, assists: 10.2 },
     totalGames: 234,
