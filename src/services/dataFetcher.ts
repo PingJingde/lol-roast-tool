@@ -2,27 +2,19 @@
  * Data fetcher using lolso1.com API
  * Auto-logins on first call using credentials from .env
  */
-import type { PlayerData } from '@/types'
+import type { PlayerData, ChampionStat } from '@/types'
 import { apiPost, apiGet } from './lolso1Api'
 import { getCached, setCache } from '@/utils/cache'
 
 let loginPromise: Promise<boolean> | null = null
 
 async function ensureLogin(): Promise<boolean> {
-  try {
-    await apiGet('/user/me')
-    return true
-  } catch { /* need login */ }
-
+  try { await apiGet('/user/me'); return true } catch { /* need login */ }
   if (loginPromise) return loginPromise
-
   loginPromise = (async () => {
     const email = import.meta.env.VITE_LOLSO1_EMAIL
     const password = import.meta.env.VITE_LOLSO1_PASSWORD
-    if (!email || !password) {
-      console.warn('No lolso1 credentials. Set VITE_LOLSO1_EMAIL and VITE_LOLSO1_PASSWORD in .env')
-      return false
-    }
+    if (!email || !password) return false
     try {
       await apiPost('/user/login', { account: email, password })
       console.log('✅ Auto-logged into lolso1.com')
@@ -32,48 +24,33 @@ async function ensureLogin(): Promise<boolean> {
       return false
     }
   })()
-
   return loginPromise
 }
 
 // ===== Real API response types =====
 
-interface ServerInfoData {
-  puuid: string
-  serverId: string
-}
-
-interface QueueStats {
-  wins: number
-  losses: number
-  leaguePoints: number
-  provisionalGamesRemaining: number
-  queueType: string
-  tier?: string
-  rank?: string
-}
-
-interface OverviewData {
-  base: {
-    puuid: string
-    gameName: string
-    tagLine: string
-    level: number
-    profileIconId: number
+interface CardDataResponse {
+  gameName: string
+  level: number
+  rankedStats: Record<string, { wins: number; losses: number; leaguePoints: number; tier?: string; rank?: string }>
+  matchHistory: {
+    summary: {
+      winRate: number
+      win: number
+      lose: number
+      count: number
+      averageKda: number
+    }
+    games: Array<{
+      championName: string
+      kills: number
+      deaths: number
+      assists: number
+      win: boolean
+      gameMode: string
+    }>
+    champions: Record<string, { id: number; count: number; win: number; lose: number; winRate: number }>
   }
-  ranked: {
-    queues: Record<string, QueueStats>
-  }
-}
-
-interface CardData {
-  tier?: string
-  rank?: string
-  leaguePoints?: number
-  wins?: number
-  losses?: number
-  winRate?: number
-  kda?: { kills: number; deaths: number; assists: number }
 }
 
 // ===== Main fetch function =====
@@ -94,9 +71,9 @@ export async function fetchPlayerData(
     ? summonerName.split('#')
     : [summonerName, '']
 
-  let serverInfo: ServerInfoData
+  let serverInfo: { puuid: string; serverId: string }
   try {
-    serverInfo = await apiPost<ServerInfoData>('/league/player/server_info', {
+    serverInfo = await apiPost<{ puuid: string; serverId: string }>('/league/player/server_info', {
       gameName: gameName.trim(),
       tagLine: tagLine.trim(),
     })
@@ -110,42 +87,71 @@ export async function fetchPlayerData(
 
   if (!serverInfo?.puuid) throw new Error('未找到该召唤师')
 
-  // Step 2: Get overview (name, level, ranked stats)
-  const overview = await apiPost<OverviewData>('/league/player/overview', {
+  // Step 2: Get card_data (contains ALL the good stuff)
+  const card = await apiPost<CardDataResponse>('/league/player/card_data', {
     puuid: serverInfo.puuid,
     serverId: serverInfo.serverId,
   })
 
-  const solo = overview?.ranked?.queues?.['RANKED_SOLO_5x5']
-  const totalGames = (solo?.wins || 0) + (solo?.losses || 0)
-  const winRate = totalGames > 0 ? Math.round((solo!.wins / totalGames) * 10000) / 100 : 0
+  const summary = card?.matchHistory?.summary
+  const games = card?.matchHistory?.games || []
 
-  // Step 3: Get card data for tier and KDA (if available)
-  let cardData: CardData | null = null
-  try {
-    cardData = await apiPost<CardData>('/league/player/card_data', {
-      puuid: serverInfo.puuid,
-      serverId: serverInfo.serverId,
-    })
-  } catch {
-    // card_data might fail for new accounts
+  // Calculate win rate from games (summary may not exist in all responses)
+  const wins = games.filter(g => g.win).length
+  const totalGamesFromHistory = games.length
+  const calculatedWinRate = totalGamesFromHistory > 0
+    ? Math.round((wins / totalGamesFromHistory) * 10000) / 100
+    : (summary ? Math.round(summary.winRate * 10000) / 100 : 0)
+
+  // Build champion stats from games (which have championName)
+  const championAgg: Record<string, { wins: number; games: number }> = {}
+  for (const g of games) {
+    if (!g.championName) continue
+    if (!championAgg[g.championName]) championAgg[g.championName] = { wins: 0, games: 0 }
+    championAgg[g.championName].games++
+    if (g.win) championAgg[g.championName].wins++
   }
 
-  // Build player data
+  const championList: ChampionStat[] = Object.entries(championAgg)
+    .map(([name, c]) => ({
+      name,
+      winRate: Math.round((c.wins / c.games) * 10000) / 100,
+      games: c.games,
+    }))
+    .sort((a, b) => b.games - a.games)
+    .slice(0, 8)
+
+  // Calculate KDA from all games
+  const totalKills = games.reduce((s, g) => s + (g.kills || 0), 0)
+  const totalDeaths = games.reduce((s, g) => s + (g.deaths || 0), 0)
+  const totalAssists = games.reduce((s, g) => s + (g.assists || 0), 0)
+
+  // Get tier from ranked stats
+  let tier: PlayerData['tier'] = '未定级'
+  if (card?.rankedStats) {
+    for (const q of Object.values(card.rankedStats)) {
+      if (q.tier) { tier = normalizeTier(q.tier); break }
+    }
+    // If no tier but has ranked games, try inferring
+    if (tier === '未定级') {
+      for (const q of Object.values(card.rankedStats)) {
+        if ((q.wins + q.losses) > 0) { tier = '未定级'; break }
+      }
+    }
+  }
+
   const player: PlayerData = {
-    summonerName: overview?.base?.gameName || gameName,
+    summonerName: card?.gameName || gameName,
     region: serverInfo.serverId || region,
-    tier: normalizeTier(cardData?.tier || solo?.tier),
-    winRate,
+    tier,
+    winRate: calculatedWinRate,
     kda: {
-      kills: cardData?.kda?.kills || 0,
-      deaths: cardData?.kda?.deaths || 0,
-      assists: cardData?.kda?.assists || 0,
+      kills: totalKills,
+      deaths: totalDeaths || 0,
+      assists: totalAssists,
     },
-    totalGames: cardData?.wins !== undefined
-      ? (cardData.wins || 0) + (cardData.losses || 0)
-      : totalGames,
-    champions: [], // TODO: add champion mastery endpoint
+    totalGames: totalGamesFromHistory || summary?.count || 0,
+    champions: championList,
   }
 
   setCache(cacheKey, player)
@@ -171,10 +177,6 @@ function normalizeTier(raw?: string): PlayerData['tier'] {
 
 export async function checkLoginStatus(): Promise<boolean> {
   try { await apiGet('/user/me'); return true } catch { return false }
-}
-
-export async function getCurrentUser() {
-  return apiGet<{ id: string; username: string; email: string }>('/user/me')
 }
 
 export { apiPost, apiGet }
