@@ -2,16 +2,23 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import SearchBar from '@/components/SearchBar.vue'
+import RecentSearches from '@/components/RecentSearches.vue'
 
 const router = useRouter()
 const loading = ref(false)
+const recentRef = ref<InstanceType<typeof RecentSearches>>()
 
 function handleSearch(name: string, region: string) {
   loading.value = true
+  recentRef.value?.saveSearch(name, region)
   router.push({
     path: '/result',
     query: { name, region },
   })
+}
+
+function handleSelectRecent(name: string, region: string) {
+  handleSearch(name, region)
 }
 </script>
 
@@ -28,5 +35,8 @@ function handleSearch(name: string, region: string) {
     <div class="w-full max-w-lg">
       <SearchBar :loading="loading" @search="handleSearch" />
     </div>
+
+    <!-- 最近搜索 -->
+    <RecentSearches ref="recentRef" @select="handleSelectRecent" />
   </div>
 </template>
